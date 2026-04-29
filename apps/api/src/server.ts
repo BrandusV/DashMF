@@ -14,6 +14,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import websocket from '@fastify/websocket';
 import { ExchangeRateAdapter } from './adapters/ExchangeRateAdapter';
 import { BCBAdapter } from './adapters/BCBAdapter';
 import { NewsAPIAdapter } from './adapters/NewsAPIAdapter';
@@ -23,6 +24,8 @@ import { NewsService } from './services/NewsService';
 import { healthRoutes } from './routes/health';
 import { quotesRoutes } from './routes/quotes';
 import { newsRoutes } from './routes/news';
+import { Broadcaster } from './websocket/broadcaster';
+import { handleClientMessage } from './websocket/handlers';
 
 export async function buildServer(): Promise<FastifyInstance> {
   // logger desligado nos testes para nao poluir o output do vitest.
@@ -37,6 +40,8 @@ export async function buildServer(): Promise<FastifyInstance> {
     max: 60,
     timeWindow: '1 minute',
   });
+  // Plugin do WebSocket - decora app.websocketServer (instancia do ws.Server).
+  await app.register(websocket);
 
   // Em test/dev sem Redis, usamos um stub que simula miss permanente.
   // Producao injeta um cliente ioredis real via REDIS_URL (ver server bootstrap).
@@ -59,9 +64,48 @@ export async function buildServer(): Promise<FastifyInstance> {
   const currencyService = new CurrencyService(exchangeRate, bcb, cache);
   const newsService = new NewsService(newsAPI, gnews, cache);
 
+  // Broadcaster compartilhado entre /ws e workers (currency/news pollers).
+  const broadcaster = new Broadcaster();
+  // Decora a instancia para que workers (registrados externamente) consigam
+  // acessar via app.broadcaster sem ter que importar o singleton diretamente.
+  app.decorate('broadcaster', broadcaster);
+
+  // Shims que expoem so o que os handlers precisam - mantem o handler puro
+  // (sem dependencia direta do Broadcaster) e facil de testar isoladamente.
+  const subscriber = {
+    addSubscription: (ws: { readyState: number; send: (d: string) => void }, pairs: string[]) =>
+      broadcaster.subscribe(ws, pairs),
+  };
+  // AlertService completo fica para Fase V1 (ROADMAP.md). MVP responde ACK
+  // mas ainda nao persiste o alerta nem dispara notificacao.
+  const alerts = {
+    register: () => undefined,
+  };
+
   await app.register(healthRoutes);
   await app.register(quotesRoutes, { currencyService });
   await app.register(newsRoutes, { newsService });
+
+  // Rota WebSocket - protocolo definido em ARCHITECTURE.md secao 3.
+  // @fastify/websocket v10 entrega o `socket` (ws.WebSocket) diretamente como
+  // primeiro arg do handler - api antiga `connection.socket` foi removida.
+  app.get('/ws', { websocket: true }, (socket) => {
+    // setImmediate da tempo do cliente registrar onmessage antes do HELLO.
+    // Sem isso, em loopback, o frame chega antes do listener e e descartado.
+    setImmediate(() => {
+      try {
+        socket.send(JSON.stringify({ type: 'HELLO', payload: { version: '0.1.0' } }));
+      } catch {
+        // Se a conexao ja fechou (cliente desistiu), nao tem o que fazer.
+      }
+    });
+    socket.on('message', (raw: Buffer) => {
+      void handleClientMessage(socket, raw.toString(), { subscriber, alerts });
+    });
+    socket.on('close', () => {
+      broadcaster.cleanupDead();
+    });
+  });
 
   return app;
 }
