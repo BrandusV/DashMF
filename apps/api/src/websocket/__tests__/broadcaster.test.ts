@@ -11,7 +11,7 @@
  * Cobertura >= 80% conforme ROADMAP.md.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Broadcaster } from '../broadcaster';
 
 // Cria um socket fake com readyState OPEN.

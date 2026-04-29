@@ -11,7 +11,7 @@
  * Politica: nenhum teste deve subir Redis, Postgres ou APIs externas.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../server';
 
@@ -65,7 +65,7 @@ describe('WebSocket /ws', () => {
     const ws = await openWs(address);
     // Ignora HELLO inicial.
     await new Promise<void>((resolve) => { ws.onmessage = () => resolve(); });
-    const replies: any[] = [];
+    const replies: Array<{ type: string }> = [];
     ws.onmessage = (ev) => replies.push(JSON.parse(String(ev.data)));
     ws.send(JSON.stringify({ type: 'SUBSCRIBE', payload: { pairs: ['USD/BRL'] } }));
     // Espera arrival do ACK.
@@ -99,7 +99,7 @@ describe('WebSocket /ws', () => {
     const ws = await openWs(address);
     // Ignora HELLO.
     await new Promise<void>((resolve) => { ws.onmessage = () => resolve(); });
-    const pong = new Promise<any>((resolve) => {
+    const pong = new Promise<{ type: string }>((resolve) => {
       ws.onmessage = (ev) => resolve(JSON.parse(String(ev.data)));
     });
     ws.send(JSON.stringify({ type: 'PING' }));
