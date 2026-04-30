@@ -13,6 +13,14 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+// Compatibilidade vitest <-> @testing-library: o detector de fake timers do
+// dom-testing-library (usado por waitFor) checa por `jest`. No vitest a API
+// e `vi`. Sem este alias, `waitFor` em testes que usam `vi.useFakeTimers()`
+// fica polling via setInterval falso e estoura o timeout de 5s.
+// Issue conhecida: https://github.com/testing-library/react-testing-library/issues/1197
+// @ts-expect-error - injeta o alias no escopo global.
+globalThis.jest = vi;
+
 afterEach(() => {
   // Garante que cada teste comeca com DOM limpo.
   cleanup();
