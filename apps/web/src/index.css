@@ -1,0 +1,35 @@
+/*
+ * Estilos globais do frontend.
+ *
+ * As 3 diretivas @tailwind injetam as camadas geradas pelo Tailwind:
+ *  - base: reset + estilos primitivos (h1, body, etc).
+ *  - components: blocos reutilizaveis (.btn, .card, etc - se forem criados).
+ *  - utilities: classes atomicas (text-white, p-4, ...).
+ *
+ * Estilos abaixo definem o tema escuro padrao do dashboard (slate-950),
+ * alinhado ao design e ao contraste minimo recomendado pelo WCAG 2.1 AA
+ * (item de backlog do ROADMAP.md).
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #020617;
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    font-family: theme('fontFamily.sans');
+  }
+
+  /* Remove o spinner padrao de inputs numericos para nao poluir o layout. */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
