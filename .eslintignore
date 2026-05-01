@@ -3,6 +3,8 @@ dist
 build
 coverage
 .turbo
-*.config.ts
+.next
+.vite
 *.config.js
-*.cjs
+*.config.cjs
+*.config.ts

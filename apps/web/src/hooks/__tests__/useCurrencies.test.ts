@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useCurrencies } from '../useCurrencies';
+import { useCurrencyStore } from '../../store/currencyStore';
 
 // Mock do servico REST.
 const mockFetchQuotes = vi.fn();
@@ -33,6 +34,9 @@ beforeEach(() => {
   wsState.status = 'online';
   wsState.lastMessage = null;
   wsState.send.mockReset();
+  // Reseta o store Zustand - como e singleton global (ADR-002 em
+  // currencyStore.ts), sem reset o estado vaza entre testes e gera flakes.
+  useCurrencyStore.setState({ quotes: [] });
 });
 
 describe('useCurrencies', () => {
@@ -72,12 +76,15 @@ describe('useCurrencies', () => {
     });
   });
 
-  it('NAO deve atualizar quando lastMessage e de outro tipo (NEWS_ALERT)', () => {
+  it('NAO deve atualizar quando lastMessage e de outro tipo (NEWS_ALERT)', async () => {
     // Hook focado so em QUOTE_UPDATE.
     mockFetchQuotes.mockResolvedValueOnce([
       { pair: 'USD/BRL', bid: 5, ask: 5, mid: 5, changePct: 0, timestamp: 1 },
     ]);
     const { result, rerender } = renderHook(() => useCurrencies(['USD/BRL']));
+    // Aguarda o bootstrap REST popular o store - sem isso, o `act` sincrono
+    // abaixo le o store antes do setQuotes rodar e `find()` retorna undefined.
+    await waitFor(() => expect(result.current.quotes).toHaveLength(1));
     act(() => {
       wsState.lastMessage = { type: 'NEWS_ALERT', payload: { id: '1', headline: 'h', source: 's', url: 'https://x.com', impactedPairs: [], sentiment: 'neutral', publishedAt: 1 } };
       rerender();
