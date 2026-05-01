@@ -11,7 +11,7 @@
  * Politica: nenhum teste deve subir Redis, Postgres ou APIs externas.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../server';
 

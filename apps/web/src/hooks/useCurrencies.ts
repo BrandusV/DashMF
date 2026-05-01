@@ -58,7 +58,9 @@ export function useCurrencies(pairs: string[]): UseCurrenciesReturn {
       isMounted = false;
     };
     // pairs.join(',') evita disparar quando o array tem o mesmo conteudo em
-    // nova referencia (caller pode passar literal a cada render).
+    // nova referencia (caller pode passar literal a cada render). O lint nao
+    // consegue inferir que a string derivada cobre a referencia original.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pairs.join(','), setQuotes]);
 
   // SUBSCRIBE quando estiver online. Reage a mudanca de status (offline ->
@@ -67,6 +69,9 @@ export function useCurrencies(pairs: string[]): UseCurrenciesReturn {
     if (status === 'online') {
       send({ type: 'SUBSCRIBE', payload: { pairs } });
     }
+    // Mesma justificativa do effect anterior: pairs.join(',') estabiliza a
+    // dependencia sem exigir useMemo no caller.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, pairs.join(','), send]);
 
   // QUOTE_UPDATE -> upsert no store. Outros tipos sao ignorados.
