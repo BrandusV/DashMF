@@ -49,5 +49,4 @@ class ResizeObserverStub {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error - injeta o stub no escopo global.
 global.ResizeObserver = ResizeObserverStub;
