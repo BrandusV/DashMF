@@ -1,0 +1,73 @@
+# Workflow de Integracao Continua (CI) do DashMF.
+# Roda lint, typecheck, testes e build a cada push/PR para develop e main.
+# Referencia: ROADMAP.md (MVP - Fase 0) e CONTRIBUTING.md (checklist de PR).
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# Cancela execucoes anteriores da mesma branch quando um novo commit chega.
+# Por que: evita gastar minutos de CI rodando o codigo "antigo" enquanto ja
+# existe codigo mais novo a caminho.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Princípio do menor privilegio: o GITHUB_TOKEN deste workflow so consegue
+# LER o conteudo do repo. Nao escreve, nao publica releases, nao mexe em PRs.
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, Typecheck, Test, Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # 1. Baixa o codigo do repo dentro do runner.
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+
+      # 2. Instala o pnpm na mesma versao definida em package.json -> packageManager.
+      # Manter igual ao local evita "funciona aqui, quebra no CI".
+      - name: Setup do pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      # 3. Instala o Node.js 20 (LTS, mesma versao definida em engines).
+      # cache: 'pnpm' faz o setup-node cachear o store do pnpm entre execucoes,
+      # reduzindo bastante o tempo de instalacao de dependencias.
+      - name: Setup do Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # 4. --frozen-lockfile: se pnpm-lock.yaml estiver desalinhado com algum
+      # package.json, o install FALHA. Garante reprodutibilidade absoluta entre
+      # ambiente local e CI.
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      # 5. ESLint em todos os workspaces (turbo paraleliza).
+      - name: Lint
+        run: pnpm lint
+
+      # 6. tsc --noEmit em todos os workspaces (apenas verifica tipos).
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # 7. Suite de testes (vitest run em api, web, types e utils).
+      - name: Testes unitarios
+        run: pnpm test
+
+      # 8. Build de producao (apps/api -> dist, apps/web -> dist via Vite).
+      # Roda por ultimo para validar que o codigo realmente compila para deploy.
+      - name: Build
+        run: pnpm build

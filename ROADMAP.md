@@ -44,7 +44,7 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 | Poller de notícias (5min) | Backend Worker | P1 | Implementado |
 | Status bar da conexão WS | Frontend | P1 | Implementado |
 | Health endpoint (`GET /health`) | Backend | P1 | Implementado |
-| CI/CD GitHub Actions | Infraestrutura | P1 | Pendente |
+| CI/CD GitHub Actions | Infraestrutura | P1 | Implementado (CI: lint+typecheck+test+build em PRs/push para main e develop. CD pendente até deploy.) |
 | Variação % (colorida) nas cotações | Frontend | P2 | Implementado |
 | Sentry básico (captura de erros) | Monitoramento | P2 | Pendente |
 
@@ -132,6 +132,7 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 |---|---|---|
 | 2026-04-26 | 1.0.0 | Criação inicial com MVP, V1, V2 e V3 |
 | 2026-05-01 | 1.1.0 | MVP backend + frontend implementados (TDD GREEN). Pendentes: CI/CD, Sentry, deploy. |
+| 2026-05-02 | 1.1.1 | CI GitHub Actions adicionado (lint+typecheck+test+build). Pendentes: Sentry, deploy. |
 
 ---
 
