@@ -15,11 +15,7 @@
  *    workers periodicamente para evitar vazamento de memoria.
  */
 import { type NewsItem, type Quote, newsItemSchema, quoteSchema } from '@dashmf/types';
-
-interface SocketLike {
-  readyState: number;
-  send: (data: string) => void;
-}
+import type { SocketLike } from './types';
 
 // readyState OPEN do WebSocket (RFC 6455). ws.WebSocket exporta o valor 1.
 const WS_OPEN = 1;

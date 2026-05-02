@@ -26,6 +26,7 @@ import { quotesRoutes } from './routes/quotes';
 import { newsRoutes } from './routes/news';
 import { Broadcaster } from './websocket/broadcaster';
 import { handleClientMessage } from './websocket/handlers';
+import type { SocketLike } from './websocket/types';
 
 export async function buildServer(): Promise<FastifyInstance> {
   // logger desligado nos testes para nao poluir o output do vitest.
@@ -73,8 +74,7 @@ export async function buildServer(): Promise<FastifyInstance> {
   // Shims que expoem so o que os handlers precisam - mantem o handler puro
   // (sem dependencia direta do Broadcaster) e facil de testar isoladamente.
   const subscriber = {
-    addSubscription: (ws: { readyState: number; send: (d: string) => void }, pairs: string[]) =>
-      broadcaster.subscribe(ws, pairs),
+    addSubscription: (ws: SocketLike, pairs: string[]) => broadcaster.subscribe(ws, pairs),
   };
   // AlertService completo fica para Fase V1 (ROADMAP.md). MVP responde ACK
   // mas ainda nao persiste o alerta nem dispara notificacao.

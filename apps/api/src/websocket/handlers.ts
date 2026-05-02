@@ -14,11 +14,7 @@
  * de injecao de protocolo.
  */
 import { type AlertCondition, wsClientMessageSchema } from '@dashmf/types';
-
-interface SocketLike {
-  send: (data: string) => void;
-  close: (code?: number, reason?: string) => void;
-}
+import type { SocketLike } from './types';
 
 interface SubscriberLike {
   addSubscription: (ws: SocketLike, pairs: string[]) => void;
