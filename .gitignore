@@ -33,3 +33,6 @@ Thumbs.db
 
 # Prisma
 apps/api/prisma/migrations/dev.db*
+
+# Artefatos gerados a partir de docs/ (Markdown e a fonte versionada)
+docs/**/*.pdf

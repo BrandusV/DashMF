@@ -32,21 +32,25 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 
 | Feature | Módulo | Prioridade | Status |
 |---|---|---|---|
-| Setup monorepo (pnpm + Turborepo) | Infraestrutura | P0 | Pendente |
-| Servidor WebSocket (Fastify + ws) | Backend | P0 | Pendente |
-| Hook `useWebSocket` com reconexão | Frontend | P0 | Pendente |
-| Widget de cotação (par de moedas) | Frontend | P0 | Pendente |
-| Integração ExchangeRate-API | Backend Adapter | P0 | Pendente |
-| Integração BCB/PTAX | Backend Adapter | P1 | Pendente |
-| Poller de cotações (30s) | Backend Worker | P0 | Pendente |
-| Cache Redis de cotações | Backend | P0 | Pendente |
-| Feed de notícias (NewsAPI) | Backend + Frontend | P1 | Pendente |
-| Poller de notícias (5min) | Backend Worker | P1 | Pendente |
-| Status bar da conexão WS | Frontend | P1 | Pendente |
-| Health endpoint (`GET /health`) | Backend | P1 | Pendente |
-| CI/CD GitHub Actions | Infraestrutura | P1 | Pendente |
-| Variação % (colorida) nas cotações | Frontend | P2 | Pendente |
-| Sentry básico (captura de erros) | Monitoramento | P2 | Pendente |
+| Setup monorepo (pnpm + Turborepo) | Infraestrutura | P0 | Implementado |
+| Servidor WebSocket (Fastify + ws) | Backend | P0 | Implementado |
+| Hook `useWebSocket` com reconexão | Frontend | P0 | Implementado |
+| Widget de cotação (par de moedas) | Frontend | P0 | Implementado |
+| Integração ExchangeRate-API | Backend Adapter | P0 | Implementado |
+| Integração BCB/PTAX | Backend Adapter | P1 | Implementado |
+| Poller de cotações (30s) | Backend Worker | P0 | Implementado |
+| Cache Redis de cotações | Backend | P0 | Implementado (cache stub; ioredis injetado em prod via REDIS_URL) |
+| Feed de notícias (NewsAPI) | Backend + Frontend | P1 | Implementado |
+| Poller de notícias (5min) | Backend Worker | P1 | Implementado |
+| Status bar da conexão WS | Frontend | P1 | Implementado |
+| Health endpoint (`GET /health`) | Backend | P1 | Implementado |
+| CI/CD GitHub Actions | Infraestrutura | P1 | Implementado (CI: lint+typecheck+test+build em PRs/push para main e develop. CD pendente até deploy.) |
+| Variação % (colorida) nas cotações | Frontend | P2 | Implementado |
+| Sentry básico (captura de erros) | Monitoramento | P2 | Implementado (web `@sentry/react` + api `@sentry/node`, ativados via `SENTRY_DSN`/`VITE_SENTRY_DSN`) |
+| Entrypoint de produção do backend | Backend | P0 | Implementado (`apps/api/src/index.ts` com graceful shutdown SIGTERM/SIGINT) |
+| Configs de deploy (Vercel + Railway) | Infraestrutura | P0 | Implementado (`vercel.json`, `railway.json`, `nixpacks.toml`) |
+| Push `develop` para `origin` | Infraestrutura | P0 | Pendente |
+| Deploy em produção (Vercel + Railway) | Infraestrutura | P0 | Pendente |
 
 ---
 
@@ -131,6 +135,9 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 | Data | Versão | Alteração |
 |---|---|---|
 | 2026-04-26 | 1.0.0 | Criação inicial com MVP, V1, V2 e V3 |
+| 2026-05-01 | 1.1.0 | MVP backend + frontend implementados (TDD GREEN). Pendentes: CI/CD, Sentry, deploy. |
+| 2026-05-02 | 1.1.1 | CI GitHub Actions adicionado (lint+typecheck+test+build). Pendentes: Sentry, deploy. |
+| 2026-05-03 | 1.2.0 | Sentry web+api integrado. Página Dashboard composta. Entrypoint de produção e configs Vercel/Railway/Nixpacks adicionados. Pendentes: push para origin e deploy real. |
 
 ---
 

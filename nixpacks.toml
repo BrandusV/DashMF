@@ -1,0 +1,30 @@
+# Config Nixpacks para o backend Fastify (apps/api) no Railway.
+# Fica na raiz do monorepo: o pnpm install precisa rodar do raiz para
+# resolver os workspaces (@dashmf/types, @dashmf/utils). Se apontassemos
+# Railway Root Directory para apps/api, perderiamos os workspaces.
+# No painel Railway: Root Directory deve ficar como "/" (raiz do repo).
+
+[phases.setup]
+# Node 20 LTS - alinhado a engines.node do package.json raiz.
+# Pnpm vem via corepack (Node 20+ ja inclui corepack ativo por padrao).
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+  # corepack le `packageManager` do package.json e ativa pnpm na versao certa.
+  "corepack enable",
+  "corepack prepare pnpm@9.0.0 --activate",
+  # --frozen-lockfile garante reproducibilidade entre dev/CI/prod.
+  "pnpm install --frozen-lockfile",
+]
+
+[phases.build]
+# `tsc --noEmit` no apps/api atua como gate de qualidade pre-deploy
+# (typecheck). Nao gera dist/ - executamos via tsx em runtime
+# (ver apps/api/package.json - decisao documentada em
+# project_deploy_strategy.md).
+cmds = ["pnpm --filter api build"]
+
+[start]
+# Roda apps/api/src/index.ts via tsx (PORT injetado pelo Railway).
+cmd = "pnpm --filter api start"
