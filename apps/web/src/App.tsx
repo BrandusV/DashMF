@@ -1,24 +1,15 @@
 /**
- * Componente raiz - placeholder do bootstrap (PR feature/web-bootstrap).
+ * App - shell raiz da aplicacao.
  *
- * Sera substituido pelo layout real (sidebar + header + Dashboard) em
- * feature/web-components-pages, onde tambem plugaremos `useWebSocket`
- * e o componente StatusBar.
+ * Hoje apenas monta a pagina Dashboard. Quando V2 (autenticacao + multi-rota)
+ * entrar no roadmap, este componente vira o Router/AuthProvider; a Dashboard
+ * passa a ser uma rota entre outras (ex: /alerts, /settings).
  *
- * Manter este stub aqui permite rodar `pnpm --filter web dev` ja agora
- * para validar que Tailwind/PostCSS/Vite estao corretamente configurados.
+ * Mantemos o shell separado da Dashboard para que o teste de composicao da
+ * pagina nao precise mockar Router/Provider.
  */
-export function App() {
-  return (
-    <main className="min-h-screen flex items-center justify-center text-slate-200">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-wider">
-          Dash<span className="text-blue-500">MF</span>
-        </h1>
-        <p className="mt-2 text-sm text-slate-400">
-          Bootstrap pronto. Aguardando componentes do dashboard.
-        </p>
-      </div>
-    </main>
-  );
+import { Dashboard } from './pages/Dashboard';
+
+export function App(): JSX.Element {
+  return <Dashboard />;
 }
