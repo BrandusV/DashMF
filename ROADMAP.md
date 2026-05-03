@@ -46,7 +46,11 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 | Health endpoint (`GET /health`) | Backend | P1 | Implementado |
 | CI/CD GitHub Actions | Infraestrutura | P1 | Implementado (CI: lint+typecheck+test+build em PRs/push para main e develop. CD pendente até deploy.) |
 | Variação % (colorida) nas cotações | Frontend | P2 | Implementado |
-| Sentry básico (captura de erros) | Monitoramento | P2 | Pendente |
+| Sentry básico (captura de erros) | Monitoramento | P2 | Implementado (web `@sentry/react` + api `@sentry/node`, ativados via `SENTRY_DSN`/`VITE_SENTRY_DSN`) |
+| Entrypoint de produção do backend | Backend | P0 | Implementado (`apps/api/src/index.ts` com graceful shutdown SIGTERM/SIGINT) |
+| Configs de deploy (Vercel + Railway) | Infraestrutura | P0 | Implementado (`vercel.json`, `railway.json`, `nixpacks.toml`) |
+| Push `develop` para `origin` | Infraestrutura | P0 | Pendente |
+| Deploy em produção (Vercel + Railway) | Infraestrutura | P0 | Pendente |
 
 ---
 
@@ -133,6 +137,7 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 | 2026-04-26 | 1.0.0 | Criação inicial com MVP, V1, V2 e V3 |
 | 2026-05-01 | 1.1.0 | MVP backend + frontend implementados (TDD GREEN). Pendentes: CI/CD, Sentry, deploy. |
 | 2026-05-02 | 1.1.1 | CI GitHub Actions adicionado (lint+typecheck+test+build). Pendentes: Sentry, deploy. |
+| 2026-05-03 | 1.2.0 | Sentry web+api integrado. Página Dashboard composta. Entrypoint de produção e configs Vercel/Railway/Nixpacks adicionados. Pendentes: push para origin e deploy real. |
 
 ---
 
