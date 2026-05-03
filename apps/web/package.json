@@ -16,6 +16,7 @@
   "dependencies": {
     "@dashmf/types": "workspace:*",
     "@dashmf/utils": "workspace:*",
+    "@sentry/react": "^10.51.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.378.0",
     "react": "^18.2.0",

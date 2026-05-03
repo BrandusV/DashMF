@@ -27,8 +27,14 @@ import { newsRoutes } from './routes/news';
 import { Broadcaster } from './websocket/broadcaster';
 import { handleClientMessage } from './websocket/handlers';
 import type { SocketLike } from './websocket/types';
+import { initSentry } from './lib/sentry';
 
 export async function buildServer(): Promise<FastifyInstance> {
+  // Sentry primeiro - se houver crash durante o registro de plugins, ja
+  // queremos a captura instalada. Em test/CI sem SENTRY_DSN o init eh noop
+  // (ver lib/sentry.ts) entao chamar aqui nao polui os testes.
+  initSentry();
+
   // logger desligado nos testes para nao poluir o output do vitest.
   const app = Fastify({ logger: false });
 
