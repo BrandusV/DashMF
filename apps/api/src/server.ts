@@ -15,6 +15,7 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
+import Redis from 'ioredis';
 import { ExchangeRateAdapter } from './adapters/ExchangeRateAdapter';
 import { BCBAdapter } from './adapters/BCBAdapter';
 import { NewsAPIAdapter } from './adapters/NewsAPIAdapter';
@@ -50,14 +51,30 @@ export async function buildServer(): Promise<FastifyInstance> {
   // Plugin do WebSocket - decora app.websocketServer (instancia do ws.Server).
   await app.register(websocket);
 
-  // Em test/dev sem Redis, usamos um stub que simula miss permanente.
-  // Producao injeta um cliente ioredis real via REDIS_URL (ver server bootstrap).
+  // Stub que simula miss permanente - usado em test/CI e em dev sem Redis local.
+  // SECURITY.md / DATA_GOVERNANCE.md: testes NUNCA podem abrir conexao real;
+  // por isso forcamos o stub quando NODE_ENV='test', mesmo se REDIS_URL estiver
+  // setado (setup.ts injeta um valor de exemplo so para documentar a forma da URL).
   const fakeRedis = {
     get: async () => null,
     set: async () => 'OK',
     del: async () => 1,
   };
-  const cache = new CacheService(fakeRedis as never);
+  const useRealRedis =
+    process.env.NODE_ENV !== 'test' && Boolean(process.env.REDIS_URL);
+  const redis = useRealRedis
+    ? new Redis(process.env.REDIS_URL as string, {
+        // lazyConnect deixa a conexao abrir sob demanda - evita crash do
+        // bootstrap se o Redis ainda nao estiver disponivel no Railway no
+        // primeiro deploy (workers podem ainda nao estar prontos).
+        lazyConnect: true,
+        // maxRetriesPerRequest=null + enableOfflineQueue=true (default) faz
+        // ioredis enfileirar comandos enquanto reconecta, em vez de quebrar
+        // toda chamada de cache durante um blip de rede.
+        maxRetriesPerRequest: null,
+      })
+    : (fakeRedis as never);
+  const cache = new CacheService(redis as never);
 
   // Adapters externos. Chaves vem do env (validadas em setup.ts nos testes).
   const exchangeRate = new ExchangeRateAdapter(process.env.EXCHANGE_RATE_API_KEY ?? '');
