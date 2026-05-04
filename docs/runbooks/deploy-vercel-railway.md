@@ -131,14 +131,20 @@ Vercel serve o **React buildado pelo Vite** como estático.
 1. Acesse [vercel.com](https://vercel.com) → login com GitHub.
 2. **Add New → Project** → import o repo `DashMF`.
 3. Tela de configuração:
-   - **Framework Preset:** `Other` (o `vercel.json` cuida — `framework: null`).
-   - **Root Directory:** `/` (vazio). Mesmo motivo do Railway: workspaces
-     precisam da raiz.
-4. Build/output já estão fixados em [vercel.json](../../vercel.json):
-   - `installCommand`: `pnpm install --frozen-lockfile`
-   - `buildCommand`: `pnpm --filter web build`
-   - `outputDirectory`: `apps/web/dist`
-5. **Production Branch:** `develop` (Settings → Git, depois do create).
+   - **Framework Preset:** o Vercel detecta `Vite` automaticamente (do
+     `apps/web/package.json`). Pode deixar como detectado.
+   - **Root Directory:** clique em **Edit** → digite `apps/web` → **Continue**.
+     Marque **"Include source files outside of the Root Directory in the build
+     step"** (essencial para o `pnpm install` resolver os workspaces
+     `@dashmf/types` e `@dashmf/utils` que ficam fora de `apps/web`).
+4. A config do Vercel mora em [apps/web/vercel.json](../../apps/web/vercel.json):
+   - `framework: vite` — Vercel usa preset Vite (build = `pnpm build`,
+     output = `dist`).
+   - `installCommand: pnpm install --frozen-lockfile` — reproducibilidade
+     com o lockfile.
+5. **Production Branch:** `main` (Settings → Git, depois do create). Workflow
+   recomendado: trabalhar em `develop` e abrir PR `develop → main` para
+   disparar deploys de produção.
 
 ### 4.2 Variáveis de ambiente (Settings → Environment Variables)
 
