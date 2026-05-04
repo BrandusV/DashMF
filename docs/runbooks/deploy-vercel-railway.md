@@ -53,6 +53,12 @@ DSN diferente para cada. Sem isso, o deploy roda mas erros caem no vazio.
 
 Guarde os dois DSNs — vão entrar nas variáveis de ambiente abaixo.
 
+> **Divergência de nomenclatura no deploy real (BrandusV, 2026-05-04):**
+> os projetos foram criados como `chimera` (Node/api) e `chimeradash` (React/web)
+> em vez de `dashmf-api`/`dashmf-web`. Nome no Sentry é cosmético — o DSN funciona
+> pelo project ID interno, não pelo nome. Quando este runbook mencionar
+> `dashmf-api` ou `dashmf-web`, leia como `chimera` e `chimeradash`.
+
 > **DSN do Sentry é público por design** (só envia eventos, não lê dados).
 > Pode entrar no bundle do frontend sem risco — diferente de chaves de API,
 > que ficam só no backend.

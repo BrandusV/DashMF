@@ -49,7 +49,7 @@ MVP (Fase 0) --> V1 (Fase 1) --> V2 (Fase 2) --> V3 (Fase 3)
 | Sentry básico (captura de erros) | Monitoramento | P2 | Implementado (web `@sentry/react` + api `@sentry/node`, ativados via `SENTRY_DSN`/`VITE_SENTRY_DSN`) |
 | Entrypoint de produção do backend | Backend | P0 | Implementado (`apps/api/src/index.ts` com graceful shutdown SIGTERM/SIGINT) |
 | Configs de deploy (Vercel + Railway) | Infraestrutura | P0 | Implementado (`vercel.json`, `railway.json`, `nixpacks.toml`) |
-| Push `develop` para `origin` | Infraestrutura | P0 | Pendente |
+| Push `develop` para `origin` | Infraestrutura | P0 | Implementado |
 | Deploy em produção (Vercel + Railway) | Infraestrutura | P0 | Pendente |
 
 ---
