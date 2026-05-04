@@ -13,6 +13,11 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+// Importa WebSocket do pacote 'ws' em vez de confiar no global.
+// Node 22+ expoe WebSocket como global, mas nosso engines.node eh ">=20",
+// e o CI roda em Node 20 - sem o import, o teste quebra com ReferenceError.
+// O 'ws' ja eh dependencia de producao usada por @fastify/websocket.
+import WebSocket from 'ws';
 import { buildServer } from '../../server';
 
 let app: FastifyInstance;
@@ -33,52 +38,76 @@ afterEach(async () => {
   await app.close();
 });
 
-// Helper: abre conexao WS e resolve quando estiver "open".
-function openWs(url: string): Promise<WebSocket> {
+// Helper: abre conexao WS e devolve um cliente com fila de mensagens.
+// Por que enfileiramos: o pacote 'ws' usa EventEmitter do Node - se o listener
+// 'message' nao estiver registrado ANTES da mensagem chegar, ela eh perdida
+// (diferente da Web API global, que entrega via microtask). O HELLO sai do
+// servidor imediatamente apos o handshake, entao precisamos registrar o
+// listener no instante da criacao do socket, nao depois.
+type WsClient = {
+  ws: WebSocket;
+  // Resolve com a proxima mensagem (parsed). Se ja houver alguma na fila,
+  // retorna imediatamente; caso contrario, aguarda chegar.
+  next: () => Promise<{ type: string } & Record<string, unknown>>;
+};
+
+function openWs(url: string): Promise<WsClient> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
-    ws.onopen = () => resolve(ws);
-    ws.onerror = (e) => reject(e);
+    const queue: Array<{ type: string } & Record<string, unknown>> = [];
+    const waiters: Array<(msg: { type: string } & Record<string, unknown>) => void> = [];
+    ws.on('message', (data) => {
+      const parsed = JSON.parse(String(data)) as { type: string } & Record<string, unknown>;
+      const waiter = waiters.shift();
+      if (waiter) waiter(parsed);
+      else queue.push(parsed);
+    });
+    ws.on('open', () => {
+      resolve({
+        ws,
+        next: () =>
+          new Promise((r) => {
+            const buffered = queue.shift();
+            if (buffered !== undefined) r(buffered);
+            else waiters.push(r);
+          }),
+      });
+    });
+    ws.on('error', (e) => reject(e));
   });
 }
 
 describe('WebSocket /ws', () => {
   it('deve aceitar conexao no path /ws', async () => {
     // Smoke test - cliente consegue handshake.
-    const ws = await openWs(address);
+    const { ws } = await openWs(address);
     expect(ws.readyState).toBe(WebSocket.OPEN);
     ws.close();
   });
 
   it('deve enviar HELLO inicial logo apos conectar', async () => {
     // Frontend usa o HELLO para confirmar protocolo e sincronizar versao.
-    const ws = await openWs(address);
-    const msg: { type: string } = await new Promise((resolve) => {
-      ws.onmessage = (ev) => resolve(JSON.parse(String(ev.data)));
-    });
+    const { ws, next } = await openWs(address);
+    const msg = await next();
     expect(msg.type).toBe('HELLO');
     ws.close();
   });
 
   it('deve aceitar SUBSCRIBE com pares validos e responder ACK', async () => {
     // Cliente subscreve e recebe confirmacao explicita - protocolo do ARCHITECTURE.md.
-    const ws = await openWs(address);
-    // Ignora HELLO inicial.
-    await new Promise<void>((resolve) => { ws.onmessage = () => resolve(); });
-    const replies: Array<{ type: string }> = [];
-    ws.onmessage = (ev) => replies.push(JSON.parse(String(ev.data)));
+    const { ws, next } = await openWs(address);
+    await next(); // descarta HELLO
     ws.send(JSON.stringify({ type: 'SUBSCRIBE', payload: { pairs: ['USD/BRL'] } }));
-    // Espera arrival do ACK.
-    await new Promise((r) => setTimeout(r, 100));
-    expect(replies.find((m) => m.type === 'ACK')).toBeTruthy();
+    const ack = await next();
+    expect(ack.type).toBe('ACK');
     ws.close();
   });
 
   it('deve fechar a conexao com codigo 1003 quando JSON e invalido', async () => {
     // 1003 = Unsupported Data (RFC 6455). Defesa contra cliente bugado.
-    const ws = await openWs(address);
+    const { ws } = await openWs(address);
     const closePromise = new Promise<number>((resolve) => {
-      ws.onclose = (e) => resolve(e.code);
+      ws.on('close', (code) => resolve(code));
     });
     ws.send('not-a-json{');
     expect(await closePromise).toBe(1003);
@@ -86,9 +115,9 @@ describe('WebSocket /ws', () => {
 
   it('deve fechar com 1003 quando type da mensagem e desconhecido', async () => {
     // Schema rejeita - servidor nao tenta interpretar.
-    const ws = await openWs(address);
+    const { ws } = await openWs(address);
     const closePromise = new Promise<number>((resolve) => {
-      ws.onclose = (e) => resolve(e.code);
+      ws.on('close', (code) => resolve(code));
     });
     ws.send(JSON.stringify({ type: 'HACK_ME', payload: {} }));
     expect(await closePromise).toBe(1003);
@@ -96,14 +125,11 @@ describe('WebSocket /ws', () => {
 
   it('deve responder PONG quando recebe PING', async () => {
     // Mantem NAT/proxies acordados (ARCHITECTURE.md secao 3 - keep-alive).
-    const ws = await openWs(address);
-    // Ignora HELLO.
-    await new Promise<void>((resolve) => { ws.onmessage = () => resolve(); });
-    const pong = new Promise<{ type: string }>((resolve) => {
-      ws.onmessage = (ev) => resolve(JSON.parse(String(ev.data)));
-    });
+    const { ws, next } = await openWs(address);
+    await next(); // descarta HELLO
     ws.send(JSON.stringify({ type: 'PING' }));
-    expect((await pong).type).toBe('PONG');
+    const pong = await next();
+    expect(pong.type).toBe('PONG');
     ws.close();
   });
 
